@@ -78,7 +78,7 @@
       function renderChart(type, legend) {
         $.ajax({
           type: 'GET',
-          url: '{{ url_for('account_hero_data', account_id=account.id, hero_id=hero.id) }}/datatype/'+type,
+          url: '/account/{{ account.id }}/hero/{{ hero.id }}/datatype/'+type,
           error: function() {
             alert('Une erreur réseau est survenue.');
           },

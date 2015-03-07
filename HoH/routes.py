@@ -5,6 +5,7 @@ from HoH.models.Account import Account
 from HoH.models.Hero import Hero
 from HoH.models.AccountRegion import AccountRegion
 from flask import render_template, abort, jsonify
+import time
 
 # Accueil (sélection et import de compte)
 @app.route('/')
@@ -71,8 +72,73 @@ def account_hero_update(account_id, hero_id):
 
 # Récupération de données pour graphiques héros vue globale
 @app.route('/account/<int:account_id>/hero/<int:hero_id>/datatype/<datatype>')
-def account_hero_data(account_id, hero_id, datatype):
-    return ''
+def account_hero_data(account_id, hero_id, datatype = None):
+    account = Account.query.get(account_id)
+
+    if account is None:
+        result = {'result': 'failure', 'data': {'message': 'Ce compte n\'existe pas.'}}
+        return jsonify(result)
+
+    hero = Hero.query.get(hero_id)
+
+    if hero is None:
+        result = {'result': 'failure', 'data': {'message': 'Ce Héro n\'existe pas.'}}
+        return jsonify(result)
+
+    data = []
+
+    if datatype == 'resists':
+        data.append([])
+        data.append([])
+        data.append([])
+        data.append([])
+        data.append([])
+        data.append([])
+
+        for history in hero.history:
+            timestamp = time.mktime(history.timestamp.timetuple()) * 1000
+
+            data[0].append({'x': timestamp, 'y': history.physical_resist})
+            data[1].append({'x': timestamp, 'y': history.fire_resist})
+            data[2].append({'x': timestamp, 'y': history.cold_resist})
+            data[3].append({'x': timestamp, 'y': history.lightning_resist})
+            data[4].append({'x': timestamp, 'y': history.poison_resist})
+            data[5].append({'x': timestamp, 'y': history.arcane_resist})
+    elif datatype == 'life':
+        data.append([])
+        data.append([])
+        data.append([])
+        data.append([])
+
+        for history in hero.history:
+            timestamp = time.mktime(history.timestamp.timetuple()) * 1000
+
+            data[0].append({'x': timestamp, 'y': history.life})
+            data[1].append({'x': timestamp, 'y': history.life_per_kill})
+            data[2].append({'x': timestamp, 'y': history.life_on_hit})
+            data[3].append({'x': timestamp, 'y': history.healing})
+    elif datatype == 'percentages':
+        data.append([])
+        data.append([])
+        data.append([])
+        data.append([])
+        data.append([])
+        data.append([])
+        data.append([])
+
+        for history in hero.history:
+            timestamp = time.mktime(history.timestamp.timetuple()) * 1000
+
+            data[0].append({'x': timestamp, 'y': history.crit_damage})
+            data[1].append({'x': timestamp, 'y': history.block_chance})
+            data[2].append({'x': timestamp, 'y': history.damage_increase})
+            data[3].append({'x': timestamp, 'y': history.crit_chance})
+            data[4].append({'x': timestamp, 'y': history.gold_find})
+            data[5].append({'x': timestamp, 'y': history.lifes_steal})
+            data[6].append({'x': timestamp, 'y': history.magic_find})
+
+    result = {'result': 'success', 'data': data}
+    return jsonify(result)
 
 @app.errorhandler(404)
 def error_404(error):
