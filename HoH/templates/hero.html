@@ -1,0 +1,189 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ super() }} Compte de {{ account.username }} &raquo; {{ hero.name }}{% endblock %}
+
+{% block jsfiles %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/jquery.canvasjs.min.js') }}"></script>
+{% endblock %}
+
+{% block breadcrumb %}
+  {{ super() }}
+  <li><a href="{{ url_for('home') }}">Accueil</a></li>
+  <li><a href="{{ url_for('account_details', account_id=account.id) }}">Compte de {{ account.username }}</a></li>
+  <li class="active">{{ hero.name }}</li>
+{% endblock %}
+
+{% block content %}
+  <h2 class="no-top-margin">
+    <i class="fa fa-star text-muted"></i> {{ hero.name }}
+    <small><i class="fa fa-tag" data-toggle="tooltip" title="Classe"></i> {% if hero.gender == 1 %}{{ hero.hero_class.name_female }}{% else %}{{ hero.hero_class.name_male }}{% endif %}</small>
+    <a href="http://{{ account.region.slug }}.battle.net/d3/fr/profile/{{ account.username }}-{{ account.battlenet_id }}/hero/{{ hero.battlenet_id }}" data-toggle="tooltip" title="Profil officiel Battle.net" class="pull-right"><i class="fa fa-external-link"></i></a>
+  </h2>
+
+  <ul class="list-inline list-unstyled">
+    <li>Dernière actualisation : {% if not hero.last_updated %}<span class="label label-warning" data-toggle="tooltip" title="Cliquez sur le bouton Actualiser le Héros">Jamais</span>{% else %}Il y a {{ hero.last_updated|time_ago }}{% endif %}</li>
+    <li><button class="btn btn-success btn-xs" id="refresh-hero-btn"><i class="fa fa-refresh"></i>&nbsp; Actualiser le Héros</button></li>
+  </ul>
+  
+  {% if hero.history.count() == 0 %}
+    <div class="alert alert-warning">Aucune donnée à afficher pour l'instant. Essayez d'actualiser ce Héros.</div>
+  {% elif hero.history.count() == 1 %}
+    <div class="alert alert-warning">Pas assez de données pour afficher des statistiques. Il faut que ce Héros ait été actualisé au moins deux fois.</div>
+  {% else %}
+    
+  <h3><i class="fa fa-shield fa-fw text-muted"></i> Résistances <i class="text-muted fa fa-circle-o-notch fa-spin" id="chart_resists_loading"></i></h3>
+
+  <div id="chart_resists" class="chart"></div>
+
+  <h3><i class="fa fa-heart fa-fw text-muted"></i> Vie <i class="text-muted fa fa-circle-o-notch fa-spin" id="chart_life_loading"></i></h3>
+
+  <div id="chart_life" class="chart"></div>
+
+  <h3><i class="fa fa-gift fa-fw text-muted"></i> Pourcentages <i class="text-muted fa fa-circle-o-notch fa-spin" id="chart_percentages_loading"></i></h3>
+
+  <div id="chart_percentages" class="chart"></div>
+    
+  {% endif %}
+  
+  <script>
+    $(function () {
+      var hoh_refresh_hero_btn = $('button#refresh-hero-btn');
+
+      hoh_refresh_hero_btn.on('click', function() {
+        hoh_refresh_hero_btn.html('<i class="fa fa-circle-o-notch fa-spin"></i> Patientez... (cela peut prendre du temps)').prop('disabled', true);
+
+        $.ajax({
+          type: 'POST',
+          url: '{{ url_for('account_hero_update', account_id=account.id, hero_id=hero.id) }}',
+          error: function() {
+            alert('Une erreur réseau est survenue.');
+          },
+          success: function(response) {
+            if (response.result == 'failure') {
+              alert(response.data.message);
+            } else if (response.result == 'success') {
+              alert(response.data.message);
+              location.replace('{{ url_for('account_hero_details', account_id=account.id, hero_id=hero.id) }}');
+            }
+          },
+          complete: function() {
+            hoh_refresh_hero_btn.html('<i class="fa fa-refresh"></i>&nbsp; Actualiser le Héros').prop('disabled', false);
+          }
+        });
+      });
+
+      {% if hero.history.count() > 1 %}
+      
+      function renderChart(type, legend) {
+        $.ajax({
+          type: 'GET',
+          url: '{{ url_for('account_hero_data', account_id=account.id, hero_id=hero.id) }}/datatype/'+type,
+          error: function() {
+            alert('Une erreur réseau est survenue.');
+          },
+          success: function(response) {
+            if (response.result == 'failure') {
+              alert(response.data.message);
+            } else if (response.result == 'success') {
+              var data = [];
+
+              for (var i = 0; i < response.data.length; i++) {
+                data.push({
+                  type: 'line',
+                  color: legend[i].color,
+                  showInLegend: true,
+                  legendText: legend[i].label,
+                  markerSize: 4,
+                  dataPoints: response.data[i],
+                  xValueType: 'dateTime'
+                });
+              }
+
+              $('div#chart_'+type).CanvasJSChart({
+                theme: 'theme1',
+                zoomEnabled: true,
+                panEnabled: true,
+                legend: {
+                  fontFamily: '"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif',
+                  fontSize: 16,
+                  horizontalAlign: 'center',
+                  verticalAlign: 'top',
+                  cursor: 'pointer',
+                  itemclick: function (e) {
+                    if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                      e.dataSeries.visible = false;
+                    } else {
+                      e.dataSeries.visible = true;
+                    }
+
+                    $('div#chart_'+type).CanvasJSChart().render();
+                  }
+                },
+                axisX: {
+                  title: 'Date',
+                  titleFontColor: '#333',
+                  labelFontColor: '#333',
+                  titleFontFamily: '"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif',
+                  labelFontFamily: '"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif',
+                  titleFontSize: 16,
+                  labelFontSize: 16,
+                  valueFormatString: 'DD/MM/YYYY',
+                  gridThickness: 1,
+                  gridColor: '#ededed'
+                },
+                axisY: {
+                  title: 'Valeur',
+                  titleFontColor: '#333',
+                  labelFontColor: '#333',
+                  titleFontFamily: '"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif',
+                  labelFontFamily: '"Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif',
+                  titleFontSize: 16,
+                  labelFontSize: 16,
+                  gridThickness: 1,
+                  includeZero: false,
+                  gridColor: '#ededed'
+                },
+                data: data
+              });
+            }
+          },
+          complete: function() {
+            $('i#chart_'+type+'_loading').hide();
+          }
+        });
+      }
+
+      // Résistances
+      renderChart('resists', [
+        {label: 'Physique', color: 'brown'},
+        {label: 'Feu', color: 'red'},
+        {label: 'Froid', color: 'blue'},
+        {label: 'Foudre', color: 'yellow'},
+        {label: 'Poison', color: 'green'},
+        {label: 'Arcanique', color: 'magenta'}
+      ]);
+
+      // Vie
+      renderChart('life', [
+        {label: 'Maximale', color: 'red'},
+        {label: 'Par victime', color: 'yellow'},
+        {label: 'Par coup', color: 'green'},
+        {label: 'Par seconde', color: 'orange'}
+      ]);
+      
+      // Pourcentages
+      renderChart('percentages', [
+        {label: 'Dégâts des coups critiques', color: 'orange'},
+        {label: 'Chances de bloquer', color: 'black'},
+        {label: 'Bonus de dégâts', color: 'red'},
+        {label: 'Chances de coup critique', color: 'blue'},
+        {label: 'Découverte d\'or', color: 'yellow'},
+        {label: 'Vol de vie', color: 'green'},
+        {label: 'Découverte d\'objets magiques', color: 'magenta'}
+      ]);
+
+      {% endif %}
+    });
+  </script>
+{% endblock %}

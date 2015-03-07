@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ super() }} Erreur{% endblock %}
+
+{% block breadcrumb %}
+  {{ super() }}
+  <li><a href="{{ url_for('home') }}">Accueil</a></li>
+  <li class="active">Erreur</li>
+{% endblock %}
+
+{% block content %}
+  <div class="alert alert-warning">
+    <h4><i class="fa fa-exclamation-circle"></i> Oups !</h4>
+    <p>{% if error.description %}{{ error.description['message'] }}{% else %}Vous essayez d'accèder à quelque chose qui n'existe pas.{% endif %}</p>
+  </div>
+  <p class="text-center"><a href="{{ url_for('home') }}" class="btn btn-primary btn-lg"><i class="fa fa-chevron-left"></i> Accueil</a></p>
+{% endblock %}
