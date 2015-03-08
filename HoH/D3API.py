@@ -1,9 +1,11 @@
+# coding=utf-8
 import requests
 from HoH import db
 from HoH.D3APIException import D3APIException
 from HoH.models.HeroClass import HeroClass
 from HoH.models.Account import Account
 from HoH.models.Hero import Hero
+from HoH.models.HeroHistory import HeroHistory
 from datetime import datetime
 
 class D3API:
@@ -84,4 +86,63 @@ class D3API:
 
             db.session.add(hero)
 
+        db.session.commit()
+
+    def refresh_account(self):
+        pass # TODO
+
+    def refresh_hero(self, hero):
+        endpoint = self.endpoint + 'profile/{}-{}/hero/{}'.format(self.username, self.id, hero.battlenet_id)
+
+        response = self._call(endpoint)
+
+        bnet_last_updated = datetime.fromtimestamp(response.get('last-updated'))
+        hoh_last_updated = hero.last_updated
+
+        if hero.last_updated and bnet_last_updated <= hoh_last_updated:
+            raise D3APIException('Aucune actualisation n\'est nécéssaire, vous n\'avez pas joué avec ce Héros depuis la dernière actualisation.')
+
+        hero_history = HeroHistory(
+            datetime.now(),
+            response.stats.life,
+            response.stats.damage,
+            response.stats.toughness,
+            response.stats.healing,
+            response.stats.attackSpeed,
+            response.stats.armor,
+            response.stats.strength,
+            response.stats.dexterity,
+            response.stats.vitality,
+            response.stats.intelligence,
+            response.stats.physicalResist,
+            response.stats.fireResist,
+            response.stats.coldResist,
+            response.stats.lightningResist,
+            response.stats.poisonResist,
+            response.stats.arcaneResist,
+            response.stats.critDamage,
+            response.stats.blockChance,
+            response.stats.blockAmountMin,
+            response.stats.blockAmountMax,
+            response.stats.damageIncrease,
+            response.stats.critChance,
+            response.stats.damageReduction,
+            response.stats.thorns,
+            response.stats.lifeSteal,
+            response.stats.lifePerKill,
+            response.stats.goldFind,
+            response.stats.magicFind,
+            response.stats.lifeOnHit,
+            response.stats.primaryResource,
+            response.stats.secondaryResource,
+            response.level,
+            response.kills.elites,
+            response.paragonLevel,
+            hero
+        )
+
+        hero.last_updated = datetime.now()
+
+        db.session.add(hero_history)
+        db.session.add(hero)
         db.session.commit()

@@ -42,7 +42,8 @@ class HeroHistory(db.Model):
 
     def __init__(self, timestamp, life, damage, toughness, healing, attack_speed, armor, strength, dexterity, vitality,
                  intelligence, physical_resist, fire_resist, cold_resist, lightning_resist, poison_resist, arcane_resist,
-                 crit_damage, damage_reduction, thorns, lifes_steal, life_per_kill, gold_find, magic_find, life_on_hit,
+                 crit_damage, block_chance, block_amount_min, block_amount_max, damage_increase, crit_chance, damage_reduction,
+                 thorns, lifes_steal, life_per_kill, gold_find, magic_find, life_on_hit,
                  primary_resource, secondary_resource, level, kills_elites, paragon_level, hero):
         self.timestamp = timestamp
         self.life = life
@@ -62,6 +63,11 @@ class HeroHistory(db.Model):
         self.poison_resist = poison_resist
         self.arcane_resist = arcane_resist
         self.crit_damage = crit_damage
+        self.block_chance = block_chance
+        self.block_amount_min = block_amount_min
+        self.block_amount_max = block_amount_max
+        self.damage_increase = damage_increase
+        self.crit_chance = crit_chance
         self.damage_reduction = damage_reduction
         self.thorns = thorns
         self.lifes_steal = lifes_steal
