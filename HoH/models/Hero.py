@@ -16,7 +16,7 @@ class Hero(db.Model):
 
     history = db.relationship('HeroHistory', backref='hero', lazy='dynamic', cascade="all, delete-orphan")
 
-    def __init__(self, battlenet_id, name, gender, lastly_played, seasonal, hardcore, account, last_updated=None):
+    def __init__(self, battlenet_id, name, gender, lastly_played, seasonal, hardcore, account, hero_class_id, last_updated=None):
         self.battlenet_id = battlenet_id
         self.name = name
         self.gender = gender
@@ -24,6 +24,7 @@ class Hero(db.Model):
         self.seasonal = seasonal
         self.hardcore = hardcore
         self.account = account
+        self.hero_class_id = hero_class_id
         self.last_updated = last_updated
 
     def __repr__(self):
