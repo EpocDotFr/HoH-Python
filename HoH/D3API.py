@@ -13,13 +13,15 @@ class D3API:
     username = None
     id = None
     region_id = None
+    region = None
 
-    api_key = 'ng2ssgrqdcesswztm75d3qaz2g8yrqdw'
+    api_key = 'uevsvyrvw5qw6tksskk8r7em73ghbjck'
     locale = 'fr_FR'
 
     def __init__(self, region, region_id, username, id):
         self.endpoint = 'https://{}.api.battle.net/d3/'.format(region)
 
+        self.region = region
         self.username = username
         self.id = id
         self.region_id = region_id
@@ -39,10 +41,10 @@ class D3API:
         response_json = response.json()
 
         if 'code' in response_json:
-            if response_json.code == 'NOTFOUND':
+            if response_json['code'] == 'NOTFOUND':
                 message = 'Ce compte Battle.net n\'existe pas.'
             else:
-                message = response_json.reason + ' (' + response_json.code + ')'
+                message = response_json['reason'] + ' (' + response_json['code'] + ')'
 
             raise D3APIException(message)
 
@@ -53,26 +55,20 @@ class D3API:
 
         response = self._call(endpoint)
 
-        classes = {}
-
-        hero_classes = HeroClass.query.all()
-
-        for hero_class in hero_classes:
-            classes[hero_class.slug] = hero_class.id
-
         now = datetime.now()
 
         account = Account(
             self.id,
             self.username,
-            self.region_id,
+            self.region,
             now
         )
 
         db.session.add(account)
-        db.session.commit()
 
         for hero in response:
+            hero_class = Hero.query.filter(slug=hero.get('class')).first()
+
             hero = Hero(
                 hero.id,
                 hero.name,
@@ -81,7 +77,7 @@ class D3API:
                 True if hero.seasonal == 1 else False,
                 True if hero.hardcore == 1 else False,
                 account,
-                classes[hero.get('class')],
+                hero_class
             )
 
             db.session.add(hero)

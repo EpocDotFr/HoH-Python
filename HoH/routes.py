@@ -1,11 +1,14 @@
 # coding=utf-8
+from requests import HTTPError
 from HoH import app
 from HoH import db
-from HoH.models.Account import Account
+from HoH.D3APIException import D3APIException
+from HoH.models.Account import Account, already_exists as account_already_exists
 from HoH.models.Hero import Hero
 from HoH.models.AccountRegion import AccountRegion
-from flask import render_template, abort, jsonify
+from flask import render_template, abort, jsonify, request
 import time
+from D3API import D3API
 
 # Accueil (sélection et import de compte)
 @app.route('/')
@@ -15,7 +18,28 @@ def home():
 # Import de compte
 @app.route('/account', methods=['POST'])
 def import_account():
-    return ''
+    account_region_id = request.form['account_region_id']
+    battlenet_id = request.form['battlenet_id']
+    username = request.form['username']
+
+    account_region = AccountRegion.query.get(account_region_id)
+
+    if (account_already_exists(battlenet_id, username, account_region_id)):
+        result = {'result': 'failure', 'data': {'message': 'Ce compte a déjà été importé.'}}
+        return jsonify(result)
+
+    try:
+        d3api = D3API(account_region.slug, account_region_id, username, battlenet_id)
+
+        d3api.import_profile()
+
+        result = {'result': 'success', 'data': {'message': 'Compte importé avec succès ! La page va maintenant s\'actualiser.'}}
+    except HTTPError as httpe:
+        result = {'result': 'failure', 'data': {'message': httpe.message}}
+    except D3APIException as d3apie:
+        result = {'result': 'failure', 'data': {'message': d3apie.message}}
+
+    return jsonify(result)
 
 # Détails d'un compte avec liste des héros
 @app.route('/account/<int:account_id>')
