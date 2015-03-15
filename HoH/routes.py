@@ -29,7 +29,7 @@ def import_account():
         return jsonify(result)
 
     try:
-        d3api = D3API(account_region.slug, account_region_id, username, battlenet_id)
+        d3api = D3API(account_region, username, battlenet_id)
 
         d3api.import_profile()
 

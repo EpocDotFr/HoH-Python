@@ -12,19 +12,17 @@ class D3API:
     endpoint = None
     username = None
     id = None
-    region_id = None
     region = None
 
-    api_key = 'uevsvyrvw5qw6tksskk8r7em73ghbjck'
+    api_key = 'kk'
     locale = 'fr_FR'
 
-    def __init__(self, region, region_id, username, id):
-        self.endpoint = 'https://{}.api.battle.net/d3/'.format(region)
+    def __init__(self, region, username, id):
+        self.endpoint = 'https://{}.api.battle.net/d3/'.format(region.slug)
 
         self.region = region
         self.username = username
         self.id = id
-        self.region_id = region_id
 
     def _call(self, endpoint):
         endpoint = endpoint + '?locale={}&apikey={}'.format(self.locale, self.api_key)
@@ -66,16 +64,16 @@ class D3API:
 
         db.session.add(account)
 
-        for hero in response:
-            hero_class = Hero.query.filter(slug=hero.get('class')).first()
+        for hero in response['heroes']:
+            hero_class = HeroClass.query.filter_by(slug = hero['class']).first()
 
             hero = Hero(
-                hero.id,
-                hero.name,
-                hero.gender,
-                True if response.lastHeroPlayed == hero.id else False,
-                True if hero.seasonal == 1 else False,
-                True if hero.hardcore == 1 else False,
+                hero['id'],
+                hero['name'],
+                hero['gender'],
+                True if response['lastHeroPlayed'] == hero['id'] else False,
+                True if hero['seasonal'] == 1 else False,
+                True if hero['hardcore'] == 1 else False,
                 account,
                 hero_class
             )

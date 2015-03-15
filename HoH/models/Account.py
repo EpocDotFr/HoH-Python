@@ -20,5 +20,5 @@ class Account(db.Model):
     def __repr__(self):
         return '<Account> #{} : {}'.format(self.id, self.username)
 
-def already_exists( battlenet_id, username, account_region_id):
+def already_exists(battlenet_id, username, account_region_id):
     return Account.query.filter_by(battlenet_id = battlenet_id, username = username, account_region_id = account_region_id).count() > 0
