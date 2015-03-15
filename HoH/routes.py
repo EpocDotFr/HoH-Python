@@ -7,6 +7,7 @@ from HoH.models.Account import Account, already_exists as account_already_exists
 from HoH.models.Hero import Hero
 from HoH.models.AccountRegion import AccountRegion
 from flask import render_template, abort, jsonify, request
+from datetime import datetime
 import time
 from D3API import D3API
 
@@ -92,7 +93,35 @@ def account_hero_details(account_id, hero_id):
 # Actualisation d'un héros
 @app.route('/account/<int:account_id>/hero/<int:hero_id>', methods=['POST'])
 def account_hero_update(account_id, hero_id):
-    return ''
+    account = Account.query.get(account_id)
+
+    if account is None:
+        result = {'result': 'failure', 'data': {'message': 'Ce compte n\'existe pas.'}}
+        return jsonify(result)
+
+    hero = Hero.query.get(hero_id)
+
+    if hero is None:
+        result = {'result': 'failure', 'data': {'message': 'Ce Héro n\'existe pas.'}}
+        return jsonify(result)
+
+    if (hero.last_updated is not None and hero.last_updated.date() == datetime.today().date()):
+        result = {'result': 'failure', 'data': {'message': 'Vous avez déjà actualisé ce Héros aujourd\'hui. Vous ne pouvez l\'actualiser qu\'une fois par jour.'}}
+        return jsonify(result)
+
+    try:
+        d3api = D3API(account.region, account.username, account.battlenet_id)
+
+        d3api.refresh_hero(hero)
+
+        result = {'result': 'success', 'data': {'message': 'Héros actualisé. La page va maintenant s\'actualiser.'}}
+    except HTTPError as httpe:
+        result = {'result': 'failure', 'data': {'message': httpe.message}}
+    except D3APIException as d3apie:
+        result = {'result': 'failure', 'data': {'message': d3apie.message}}
+
+    return jsonify(result)
+
 
 # Récupération de données pour graphiques héros vue globale
 @app.route('/account/<int:account_id>/hero/<int:hero_id>/datatype/<datatype>')

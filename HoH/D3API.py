@@ -90,7 +90,7 @@ class D3API:
 
         response = self._call(endpoint)
 
-        bnet_last_updated = datetime.fromtimestamp(response.get('last-updated'))
+        bnet_last_updated = datetime.fromtimestamp(response['last-updated'])
         hoh_last_updated = hero.last_updated
 
         if hero.last_updated and bnet_last_updated <= hoh_last_updated:
@@ -98,45 +98,46 @@ class D3API:
 
         hero_history = HeroHistory(
             datetime.now(),
-            response.stats.life,
-            response.stats.damage,
-            response.stats.toughness,
-            response.stats.healing,
-            response.stats.attackSpeed,
-            response.stats.armor,
-            response.stats.strength,
-            response.stats.dexterity,
-            response.stats.vitality,
-            response.stats.intelligence,
-            response.stats.physicalResist,
-            response.stats.fireResist,
-            response.stats.coldResist,
-            response.stats.lightningResist,
-            response.stats.poisonResist,
-            response.stats.arcaneResist,
-            response.stats.critDamage,
-            response.stats.blockChance,
-            response.stats.blockAmountMin,
-            response.stats.blockAmountMax,
-            response.stats.damageIncrease,
-            response.stats.critChance,
-            response.stats.damageReduction,
-            response.stats.thorns,
-            response.stats.lifeSteal,
-            response.stats.lifePerKill,
-            response.stats.goldFind,
-            response.stats.magicFind,
-            response.stats.lifeOnHit,
-            response.stats.primaryResource,
-            response.stats.secondaryResource,
-            response.level,
-            response.kills.elites,
-            response.paragonLevel,
+            response['stats']['life'],
+            response['stats']['damage'],
+            response['stats']['toughness'],
+            response['stats']['healing'],
+            response['stats']['attackSpeed'],
+            response['stats']['armor'],
+            response['stats']['strength'],
+            response['stats']['dexterity'],
+            response['stats']['vitality'],
+            response['stats']['intelligence'],
+            response['stats']['physicalResist'],
+            response['stats']['fireResist'],
+            response['stats']['coldResist'],
+            response['stats']['lightningResist'],
+            response['stats']['poisonResist'],
+            response['stats']['arcaneResist'],
+            response['stats']['critDamage'],
+            response['stats']['blockChance'],
+            response['stats']['blockAmountMin'],
+            response['stats']['blockAmountMax'],
+            response['stats']['damageIncrease'],
+            response['stats']['critChance'],
+            response['stats']['damageReduction'],
+            response['stats']['thorns'],
+            response['stats']['lifeSteal'],
+            response['stats']['lifePerKill'],
+            response['stats']['goldFind'],
+            response['stats']['magicFind'],
+            response['stats']['lifeOnHit'],
+            response['stats']['primaryResource'],
+            response['stats']['secondaryResource'],
+            response['level'],
+            response['kills']['elites'],
+            response['paragonLevel'],
             hero
         )
 
         hero.last_updated = datetime.now()
 
-        db.session.add(hero_history)
         db.session.add(hero)
+        db.session.add(hero_history)
+
         db.session.commit()

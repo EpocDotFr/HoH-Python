@@ -16,7 +16,7 @@
   </h2>
   
   <ul class="list-inline list-unstyled">
-    <li>Dernière actualisation il y a {{ account.last_updated|time_ago }}</li>
+    <li>Dernière actualisation {{ account.last_updated|time_ago }}</li>
     <li><button class="btn btn-success btn-xs" id="refresh-account-btn"><i class="fa fa-refresh"></i>&nbsp; Actualiser le compte</button></li>
     <li><button class="btn btn-danger btn-xs" id="delete-account-btn"><i class="fa fa-trash"></i>&nbsp; Supprimer</button></li>
   </ul>

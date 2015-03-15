@@ -22,7 +22,7 @@
   </h2>
 
   <ul class="list-inline list-unstyled">
-    <li>Dernière actualisation : {% if not hero.last_updated %}<span class="label label-warning" data-toggle="tooltip" title="Cliquez sur le bouton Actualiser le Héros">Jamais</span>{% else %}Il y a {{ hero.last_updated|time_ago }}{% endif %}</li>
+    <li>Dernière actualisation : {% if not hero.last_updated %}<span class="label label-warning" data-toggle="tooltip" title="Cliquez sur le bouton Actualiser le Héros">Jamais</span>{% else %}{{ hero.last_updated|time_ago }}{% endif %}</li>
     <li><button class="btn btn-success btn-xs" id="refresh-hero-btn"><i class="fa fa-refresh"></i>&nbsp; Actualiser le Héros</button></li>
   </ul>
   
