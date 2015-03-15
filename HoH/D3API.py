@@ -82,8 +82,74 @@ class D3API:
 
         db.session.commit()
 
-    def refresh_account(self):
-        pass # TODO
+    def refresh_account(self, account):
+        message = 'Le compte a été actualisé'
+
+        endpoint = self.endpoint + 'profile/{}-{}/'.format(self.username, self.id)
+
+        response = self._call(endpoint)
+
+        bnet_last_updated = datetime.fromtimestamp(response['lastUpdated'])
+
+        # if (account.last_updated is not None and bnet_last_updated <= account.last_updated):
+        #     raise D3APIException('Aucune actualisation n\'est nécéssaire, vous n\'avez pas joué depuis la dernière actualisation.')
+
+        heroes_deleted = 0
+        heros_created = 0
+
+        battlenet_heros_ids = []
+
+        for bnet_hero in response['heroes']:
+            battlenet_heros_ids.append(bnet_hero['id'])
+
+        for hoh_hero in account.heros:
+            if (hoh_hero.battlenet_id not in battlenet_heros_ids):
+                db.session.delete(hoh_hero)
+                heroes_deleted += 1
+                continue
+
+            for bnet_hero in response['heroes']:
+                if (bnet_hero['id'] != hoh_hero.battlenet_id):
+                    continue
+
+                hoh_hero.lastly_played = True if response['lastHeroPlayed'] == hoh_hero.battlenet_id else False
+
+                db.session.add(hoh_hero)
+
+        for bnet_hero in response['heroes']:
+            if (account.heros.filter_by(battlenet_id = bnet_hero['id']).count() == 1):
+                continue
+
+            hero_class = HeroClass.query.filter_by(slug = bnet_hero['class']).first()
+
+            hero = Hero(
+                bnet_hero['id'],
+                bnet_hero['name'],
+                bnet_hero['gender'],
+                True if response['lastHeroPlayed'] == bnet_hero['id'] else False,
+                True if bnet_hero['seasonal'] == 1 else False,
+                True if bnet_hero['hardcore'] == 1 else False,
+                account,
+                hero_class
+            )
+
+            db.session.add(hero)
+
+            heros_created += 1
+
+        if (heroes_deleted > 0):
+            message += '. {} Héros a(ont) été supprimé(s)'.format(heroes_deleted)
+
+        if (heros_created > 0):
+            message += '. {} Héros a(ont) été créé(s)'.format(heros_created)
+
+        account.last_updated = datetime.now()
+
+        db.session.add(account)
+
+        db.session.commit()
+
+        return message
 
     def refresh_hero(self, hero):
         endpoint = self.endpoint + 'profile/{}-{}/hero/{}'.format(self.username, self.id, hero.battlenet_id)

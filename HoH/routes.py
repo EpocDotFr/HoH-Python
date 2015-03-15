@@ -55,7 +55,28 @@ def account_details(account_id):
 # Actualisation d'un compte
 @app.route('/account/<int:account_id>', methods=['POST'])
 def account_update(account_id):
-    return ''
+    account = Account.query.get(account_id)
+
+    if account is None:
+        result = {'result': 'failure', 'data': {'message': 'Ce compte n\'existe pas.'}}
+        return jsonify(result)
+
+    if (account.last_updated is not None and account.last_updated.date() == datetime.today().date()):
+        result = {'result': 'failure', 'data': {'message': 'Vous avez déjà actualisé ce compte aujourd\'hui. Vous ne pouvez l\'actualiser qu\'une fois par jour.'}}
+        return jsonify(result)
+
+    try:
+        d3api = D3API(account.region, account.username, account.battlenet_id)
+
+        result_message = d3api.refresh_account(account)
+
+        result = {'result': 'success', 'data': {'message': '{}. La page va maintenant s\'actualiser.'.format(result_message)}}
+    except HTTPError as httpe:
+        result = {'result': 'failure', 'data': {'message': httpe.message}}
+    except D3APIException as d3apie:
+        result = {'result': 'failure', 'data': {'message': d3apie.message}}
+
+    return jsonify(result)
 
 # Suppression d'un compte
 @app.route('/account/<int:account_id>', methods=['DELETE'])
@@ -121,7 +142,6 @@ def account_hero_update(account_id, hero_id):
         result = {'result': 'failure', 'data': {'message': d3apie.message}}
 
     return jsonify(result)
-
 
 # Récupération de données pour graphiques héros vue globale
 @app.route('/account/<int:account_id>/hero/<int:hero_id>/datatype/<datatype>')
