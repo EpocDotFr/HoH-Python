@@ -91,8 +91,8 @@ class D3API:
 
         bnet_last_updated = datetime.fromtimestamp(response['lastUpdated'])
 
-        # if (account.last_updated is not None and bnet_last_updated <= account.last_updated):
-        #     raise D3APIException('Aucune actualisation n\'est nécéssaire, vous n\'avez pas joué depuis la dernière actualisation.')
+        if (account.last_updated is not None and bnet_last_updated <= account.last_updated):
+            raise D3APIException('Aucune actualisation n\'est nécéssaire, vous n\'avez pas joué depuis la dernière actualisation.')
 
         heroes_deleted = 0
         heros_created = 0
