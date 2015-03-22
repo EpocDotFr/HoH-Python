@@ -1,4 +1,3 @@
-# coding=utf-8
 from flask import Flask
 from flask_debugtoolbar import DebugToolbarExtension
 from flask.ext.sqlalchemy import SQLAlchemy
